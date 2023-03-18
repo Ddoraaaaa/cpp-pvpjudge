@@ -65,7 +65,7 @@ signed main() {
             return 0;
         }
         getline(cin, s); strin.str(s); strin >> pos;
-        string turnRes = checkPos(pos);
+        string turnRes = check(pos);
         if(turnRes == "win") {
             cout<<"WIN"<<endl;
         } else if(turnRes == "draw") {

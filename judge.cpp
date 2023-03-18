@@ -5,10 +5,37 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+// not available on OS X, because why would it
+// #include <seccomp.h>
 
 using namespace std;
 
-pair<int, int> 
+vector<int> exec_file(string filename, bool restricted) {
+    if(restricted) {
+        struct rlimit limits;
+
+        // limit cpu time
+        limits.rlim_cur = 1;
+        limits.rlim_max = 1;
+        setrlimit(RLIMIT_CPU, &limits);
+
+        // limit mem usage
+        limits.rlim_cur = 1024 * 1024;
+        limits.rlim_max = 1024 * 1024;
+        setrlimit(RLIMIT_AS, &limits);
+
+        // sandbox process file access
+        chdir("/");
+        chroot("/path/to/sandbox/directory");
+
+        //kill syscalls
+        // scmp_filter_ctx ctx;
+        // ctx = seccomp_init(SCMP_ACT_ALLOW);
+        // seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(execve), 0);
+        // seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(socket), 0);
+        // seccomp_load(ctx);
+    }
+}
 
 int main() {
     int judge_to_p1[2];

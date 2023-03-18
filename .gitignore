@@ -1,4 +1,4 @@
 ./vscode
-judge
-player*
-gamemaster
+./judge
+./player*
+./gamemaster
