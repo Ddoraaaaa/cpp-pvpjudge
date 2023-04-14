@@ -20,14 +20,13 @@ class exFile {
     };
 
     int toFile[2], fromFile[2];
+    int cpuTime, ramMb;
     int timeLeft, lastResume;
     FILE *toF, *frF;
     bool restricted;
 
 public:
-    exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : restricted(_restricted), timeLeft(_timeLeft), lastResume(-1) {
-
-    }
+    exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : restricted(_restricted), timeLeft(_timeLeft), lastResume(-1),  cpuTime(1), ramMb(64) {}
 
     void runFile(string fileName, string fileRoot = "") {
         
@@ -95,12 +94,22 @@ public:
         }
     }
 
-    string readLine(stringstream &strin) {
-        string s = "";
+    void setResource(int _cpuTime, int _ramMb) {
+        cpuTime = _cpuTime;
+        ramMb = _ramMb;
+    }
+
+    void readLine(string &s) {
+        s = "";
         char buf[1024];
         while(fgets(buf, sizeof(buf), frF) != nullptr) {
             s += buf;
         };
+    }
+
+    void readLine(stringstream &strin) {
+        string s = "";
+        readLine(s);
         strin.str(s);
     }
 
@@ -129,13 +138,13 @@ private:
         struct rlimit limits;
 
         // limit cpu time
-        limits.rlim_cur = 1;
-        limits.rlim_max = 1;
+        limits.rlim_cur = 0.001 * cpuTime;
+        limits.rlim_max = 0.001 * cpuTime;
         setrlimit(RLIMIT_CPU, &limits);
 
         // limit mem usage
-        limits.rlim_cur = 1024 * 1024;
-        limits.rlim_max = 1024 * 1024;
+        limits.rlim_cur = ramMb * 1024 * 1024;
+        limits.rlim_max = ramMb * 1024 * 1024;
         setrlimit(RLIMIT_AS, &limits);
 
         // sandbox process file access
@@ -153,13 +162,20 @@ private:
     }
 };
 
-int main() {
 
-    exFile judge(false);
+int main() {
+    string type;
     string p1File = "player1", p2File = "player2", judgeFile = "judge";
     stringstream p1in, p2in, judgein;
 
-    // get time limit
+    exFile judge(false);
     judge.runFile(judgeFile, judgeFile);
-    exFile player1(true), player2(true);
+
+    // get time limit
+    judge.readLine(judgein);
+    int timeLimit;
+    judgein >> type; assert(type=="time"); judgein >> timeLimit;
+
+    exFile player1(true, timeLimit), player2(true, timeLimit);
+    player1.setResource(timeLimit * 2, 64);
 }
