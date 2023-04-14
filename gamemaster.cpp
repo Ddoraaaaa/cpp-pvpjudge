@@ -167,19 +167,22 @@ int main() {
     string p1File = "player1", p2File = "player2", judgeFile = "judge";
     stringstream p1in, p2in, judgein;
 
-    exFile judge(false);
-    judge.runFile(judgeFile, judgeFile);
+    exFile *judge = new exFile(false);
+    judge->runFile(judgeFile, judgeFile);
 
     // get time limit
-    judge.readLine(judgein);
+    judge->readLine(judgein);
     int timeLimit;
     judgein >> type; assert(type=="time"); judgein >> timeLimit;
 
-    exFile player1(true, timeLimit), player2(true, timeLimit);
-    player1.setResource(timeLimit * 2, 64);
+    exFile *player1 = new exFile(true, timeLimit), *player2 = new exFile(true, timeLimit);
+    player1->runFile(p1File, p1File); player2->runFile(p2File, p2File);
+
+    exFile *players[] = {player1, player2};
 
     int turn = 0;
     while(true) {
-
+        judge->readLine(judgein);
+        jug
     }
 }
