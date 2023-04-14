@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <chrono>
 #include <unistd.h>
+#include <poll.h>
 #include <sstream>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -26,6 +27,7 @@ class exFile {
     bool restricted;
 
 public:
+
     exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : restricted(_restricted), timeLeft(_timeLeft), lastResume(-1),  cpuTime(1), ramMb(64) {}
 
     void runFile(string fileName, string fileRoot = "") {
@@ -94,7 +96,8 @@ public:
         }
     }
 
-    void setResource(int _cpuTime, int _ramMb) {
+    void setResource(int _cpuTime, int _ramMb, int _timeLimit) {
+        timeLeft = _timeLimit;
         cpuTime = _cpuTime;
         ramMb = _ramMb;
     }
@@ -130,6 +133,7 @@ public:
     }
 
 private:
+
     int getTime() {
         return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
     }
@@ -162,27 +166,79 @@ private:
     }
 };
 
+class game {
+    string pFiles[2], jFile;
+    exFile *players[2], *judge;
+    stringstream playerin, judgein;
+
+public:
+
+    enum TurnResult {
+        p1w, p2w, draw, valid
+    };
+
+    game(string _pFiles[], string _jFile) {
+        jFile = _jFile;
+        judge = new exFile(false);
+        for(int i = 0; i <= 1; i++) {
+            pFiles[i] = _pFiles[i];
+            players[i] = new exFile(true);
+        }
+        
+    }
+
+    void prepGame() {
+        string type;
+
+        judge->runFile(jFile, jFile);
+
+        // get time limit
+        judge->readLine(judgein);
+        int timeLimit;
+        judgein >> type; assert(type=="time"); judgein >> timeLimit;
+        for(int i = 0; i <= 1; i++) {
+            players[i]->setResource(3*)
+        }
+    }
+
+};
+
 int main() {
-    string type;
-    string p1File = "player1", p2File = "player2", judgeFile = "judge";
-    stringstream p1in, p2in, judgein;
+    int fd[2];
+    pipe(fd); // test
 
-    exFile *judge = new exFile(false);
-    judge->runFile(judgeFile, judgeFile);
+    struct pollfd pfd = {fd[0], POLLIN, 0};
+    int timeout_ms = 1000; // 1 second timeout
 
-    // get time limit
-    judge->readLine(judgein);
-    int timeLimit;
-    judgein >> type; assert(type=="time"); judgein >> timeLimit;
+    int ret = poll(&pfd, 1, timeout_ms);
 
+    if (ret == -1) {
+        perror("poll");
+        return 1;
+    } else if (ret == 0) {
+        // Timeout expired
+        printf("Timeout\n");
+    } else {
+        // File descriptor is ready for reading
+        char buf[1024];
+        ssize_t n = read(fd[0], buf, sizeof(buf));
+        if (n == -1) {
+            perror("read");
+            return 1;
+        } else {
+            printf("Read %ld bytes: %.*s\n", n, (int)n, buf);
+        }
+    }
+
+    return 0;
     exFile *player1 = new exFile(true, timeLimit), *player2 = new exFile(true, timeLimit);
     player1->runFile(p1File, p1File); player2->runFile(p2File, p2File);
 
     exFile *players[] = {player1, player2};
 
+    judge->readLine(judgein);
+    judgein >> type; assert(type=="gamestate"); judgin >> lineCnt
     int turn = 0;
     while(true) {
-        judge->readLine(judgein);
-        jug
     }
 }
