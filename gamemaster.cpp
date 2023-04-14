@@ -22,7 +22,9 @@ class exFile {
     bool _restricted;
 
 public:
-    exFile(bool restricted = true) : _restricted(restricted) {;}
+    exFile(bool restricted = true) : _restricted(restricted) {
+
+    }
 
     void runFile(string fileName, string fileRoot = "") {
         
@@ -106,12 +108,12 @@ private:
     void setRestriction(string fileRoot) {
         struct rlimit limits;
 
-        // limit cpu time (1s)
+        // limit cpu time
         limits.rlim_cur = 1;
         limits.rlim_max = 1;
         setrlimit(RLIMIT_CPU, &limits);
 
-        // limit mem usage (1mb)
+        // limit mem usage
         limits.rlim_cur = 1024 * 1024;
         limits.rlim_max = 1024 * 1024;
         setrlimit(RLIMIT_AS, &limits);
@@ -132,12 +134,11 @@ private:
 };
 
 int main() {
-    exFile player1(false), player2(true), judge(false);
-    string p1F = "player1", p2F = "player2", judgeF = "judge";
-    judge.runFile(judgeF);
-    player1.runFile(p1F);
-    player2.runFile(p2F);
-    while(true) {
 
-    }
+    exFile player1(true), player2(true), judge(false);
+    string p1File = "player1", p2File = "player2", judgeFile = "judge";
+    player1.runFile(p1File, p1File);
+    player2.runFile(p2File, p2File);
+    judge.runFile(judgeFile, judgeFile);
+
 }
