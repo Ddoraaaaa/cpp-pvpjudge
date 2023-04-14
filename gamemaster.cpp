@@ -2,7 +2,9 @@
 #include <fstream>
 #include <string>
 #include <cstdio>
+#include <chrono>
 #include <unistd.h>
+#include <sstream>
 #include <sys/types.h>
 #include <sys/wait.h>
 // not available on OS X, because why would it
@@ -18,11 +20,12 @@ class exFile {
     };
 
     int toFile[2], fromFile[2];
+    int timeLeft, lastResume;
     FILE *toF, *frF;
-    bool _restricted;
+    bool restricted;
 
 public:
-    exFile(bool restricted = true) : _restricted(restricted) {
+    exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : restricted(_restricted), timeLeft(_timeLeft), lastResume(-1) {
 
     }
 
@@ -62,7 +65,7 @@ public:
                 dup2(fromFile[1], STDOUT_FILENO);
             }
 
-            if(_restricted) {
+            if(restricted) {
                 setRestriction(fileRoot);
             }
             
@@ -92,19 +95,36 @@ public:
         }
     }
 
-    string readLine(string &s) {
-        s = "";
+    string readLine(stringstream &strin) {
+        string s = "";
         char buf[1024];
         while(fgets(buf, sizeof(buf), frF) != nullptr) {
             s += buf;
         };
+        strin.str(s);
     }
 
     void writeLine(string &s) {
         fprintf(toF, s.c_str());
     }
 
+    void splitTime() {
+        if(lastResume == -1) {
+            return;
+        }
+        timeLeft -= getTime() - lastResume;
+        lastResume = -1;
+    }
+
+    void resumeTime() {
+        lastResume = getTime();
+    }
+
 private:
+    int getTime() {
+        return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
+    }
+
     void setRestriction(string fileRoot) {
         struct rlimit limits;
 
@@ -135,10 +155,11 @@ private:
 
 int main() {
 
-    exFile player1(true), player2(true), judge(false);
+    exFile judge(false);
     string p1File = "player1", p2File = "player2", judgeFile = "judge";
-    player1.runFile(p1File, p1File);
-    player2.runFile(p2File, p2File);
-    judge.runFile(judgeFile, judgeFile);
+    stringstream p1in, p2in, judgein;
 
+    // get time limit
+    judge.runFile(judgeFile, judgeFile);
+    exFile player1(true), player2(true);
 }
