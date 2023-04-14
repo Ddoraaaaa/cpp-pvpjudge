@@ -162,7 +162,6 @@ private:
     }
 };
 
-
 int main() {
     string type;
     string p1File = "player1", p2File = "player2", judgeFile = "judge";
@@ -178,4 +177,9 @@ int main() {
 
     exFile player1(true, timeLimit), player2(true, timeLimit);
     player1.setResource(timeLimit * 2, 64);
+
+    int turn = 0;
+    while(true) {
+
+    }
 }
