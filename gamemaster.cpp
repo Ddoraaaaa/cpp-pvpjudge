@@ -170,6 +170,7 @@ class game {
     string pFiles[2], jFile;
     exFile *players[2], *judge;
     stringstream playerin, judgein;
+    int curPlayer;
 
 public:
 
@@ -197,8 +198,27 @@ public:
         int timeLimit;
         judgein >> type; assert(type=="time"); judgein >> timeLimit;
         for(int i = 0; i <= 1; i++) {
-            players[i]->setResource(3*)
+            players[i]->setResource(3 * timeLimit, 64, timeLimit);
         }
+
+        curPlayer = 0;
+    }
+
+    void startGame() {
+        string type;
+        int lineCnt;
+
+        judge->readLine(judgein);
+        judgein >> type; assert(type=="gamestate"); judgein >> lineCnt;
+        int turn = 0;
+
+        for(int i = 0; i <= 1; i++) {
+            players[i]->runFile(pFiles[i], pFiles[i]);
+        }
+    }
+
+    TurnResult nextTurn() {
+        return draw;
     }
 
 };
@@ -208,7 +228,7 @@ int main() {
     pipe(fd); // test
 
     struct pollfd pfd = {fd[0], POLLIN, 0};
-    int timeout_ms = 1000; // 1 second timeout
+    int timeout_ms = 1000;
 
     int ret = poll(&pfd, 1, timeout_ms);
 
@@ -216,10 +236,10 @@ int main() {
         perror("poll");
         return 1;
     } else if (ret == 0) {
-        // Timeout expired
+        // timeout expired
         printf("Timeout\n");
     } else {
-        // File descriptor is ready for reading
+        // fd ready for reading
         char buf[1024];
         ssize_t n = read(fd[0], buf, sizeof(buf));
         if (n == -1) {
@@ -228,17 +248,5 @@ int main() {
         } else {
             printf("Read %ld bytes: %.*s\n", n, (int)n, buf);
         }
-    }
-
-    return 0;
-    exFile *player1 = new exFile(true, timeLimit), *player2 = new exFile(true, timeLimit);
-    player1->runFile(p1File, p1File); player2->runFile(p2File, p2File);
-
-    exFile *players[] = {player1, player2};
-
-    judge->readLine(judgein);
-    judgein >> type; assert(type=="gamestate"); judgin >> lineCnt
-    int turn = 0;
-    while(true) {
     }
 }
