@@ -1,11 +1,12 @@
 #include <iostream>
 #include <unordered_map>
+#include <map>
 #include <utility>
 #include <tuple>
 
 using namespace std;
 
-unordered_map<pair<int, int>, int> board;
+map<pair<int, int>, int> board;
 int n = 6, m = 7;
 
 void print_board() {
