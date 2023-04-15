@@ -11,6 +11,8 @@
         "unordered_set": "cpp",
         "sstream": "cpp",
         "iostream": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "ostream": "cpp",
+        "ios": "cpp"
     }
 }

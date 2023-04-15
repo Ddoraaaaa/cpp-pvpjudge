@@ -54,8 +54,9 @@ signed main() {
     fout << "test" << endl;
 
     // time limit for each player is 1000ms
-    cout << "time 1000" << endl;
-
+    // cout << "time 10000" << endl;
+    printf("time 10000\n");
+    fflush(stdout);
     // print the original game state
     cout << "gamestate 0" << endl;
 
