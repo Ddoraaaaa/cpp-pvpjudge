@@ -33,7 +33,7 @@ string check(int pos) {
     cntMove++;
     for(int i=0; i<6; i++) {
         for(int j=1; j<=7; j++) {
-            if(a[i][j]=curPlayer) {
+            if(a[i][j]==curPlayer) {
                 if(checkRow(i, j)) {
                     return "win";
                 }
@@ -50,6 +50,9 @@ string check(int pos) {
 
 signed main() {
     ofstream fout("log.txt", ofstream::out);
+
+    fout << "test" << endl;
+
     // time limit for each player is 1000ms
     cout << "time 1000" << endl;
 

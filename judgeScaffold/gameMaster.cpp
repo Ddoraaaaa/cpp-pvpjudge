@@ -29,7 +29,7 @@ class exFile {
 
 public:
 
-    exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : restricted(_restricted), timeLeft(_timeLeft), lastResume(-1),  cpuTime(1), ramMb(64) {}
+    exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : cpuTime(1), ramMb(64), timeLeft(_timeLeft), lastResume(-1),  restricted(_restricted) {}
 
     void runFile(string fileName, string fileRoot = "") {
         
@@ -119,7 +119,7 @@ public:
     }
 
     void writeLine(string &s) {
-        fprintf(toF, s.c_str());
+        fprintf(toF, "%s", s.c_str());
     }
 
     void splitTime() {
@@ -193,6 +193,7 @@ private:
 
 class game {
     string pFiles[2], jFile;
+    string pRoots[2];
     exFile *players[2], *judge;
     stringstream playerin, judgein;
     int curPlayer, curTurn;
@@ -203,11 +204,12 @@ public:
         win, lose, draw, valid
     };
 
-    game(string _pFiles[], string _jFile) : curPlayer(0), curTurn(0) {
+    game(string _pFiles[], string _pRoots[], string _jFile) : curPlayer(0), curTurn(0) {
         jFile = _jFile;
         judge = new exFile(false);
         for(int i = 0; i <= 1; i++) {
             pFiles[i] = _pFiles[i];
+            pRoots[i] = _pRoots[i];
             players[i] = new exFile(true);
         }        
     }
@@ -235,24 +237,16 @@ public:
     }
 
     void startGame() {
-        string type;
-        int lineCnt;
-
         for(int i = 0; i <= 1; i++) {
-            string playerId = "" + ('0' + i);
-            players[i]->runFile(pFiles[i], pFiles[i]);
+            string playerId = {(char)('0' + i)};
+            players[i]->runFile(pFiles[i], pRoots[i]);
             players[i]->writeLine(playerId);
         }
-        
-        while(true) {
-            TurnResult turnRes = nextTurn();
-        }
-
     }
 
     TurnResult nextTurn() {
         TurnResult turnRes = execTurn(players[curPlayer]);
-        curPlayer ^=1;
+        curPlayer ^=1, curTurn++;
         return turnRes;
     }
 
@@ -291,13 +285,14 @@ private:
         if(type == "lose") return lose;
         if(type == "win") return win;
         if(type == "draw") return draw;
-        if(type == "valid") return valid;
+        return valid;
     }
 };
 
 int main() {
     string playersF[] = {"player1", "player2"}, judgeF = "judge";
-    game gameM(playersF, judgeF);
+    string playersRoot[] = {"./p1root", "./p2root"};
+    game gameM(playersF, playersRoot, judgeF);
     gameM.prepGame();
     gameM.startGame();
     while(true) {
@@ -310,6 +305,8 @@ int main() {
                 winner = gameM.getCurPlayer(); break;
             case game::TurnResult::lose:
                 winner = gameM.getCurPlayer() ^ 1; break;
+            default:
+                break;
         }
         if(winner != -1) {
             gameM.waitJudge();

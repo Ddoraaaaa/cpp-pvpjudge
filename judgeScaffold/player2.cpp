@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <unordered_map>
 #include <map>
 #include <utility>
@@ -81,6 +82,10 @@ pair<int, int> find_greedy() {
 }
 
 int main() {
+
+    ofstream fout("log.txt", ofstream::app);
+    fout<<"test player 1"<<endl;
+
     int player_turn;
     cin >> player_turn;
     if (player_turn == 2) {
