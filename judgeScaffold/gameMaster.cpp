@@ -132,6 +132,9 @@ public:
         lastResume = getTime();
     }
 
+    bool ensureInput() {
+        
+    }
 private:
 
     int getTime() {
@@ -215,6 +218,8 @@ public:
         for(int i = 0; i <= 1; i++) {
             players[i]->runFile(pFiles[i], pFiles[i]);
         }
+        players[0]->resumeTime();
+
     }
 
     TurnResult nextTurn() {

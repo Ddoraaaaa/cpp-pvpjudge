@@ -70,13 +70,13 @@ signed main() {
         getline(cin, s); strin.str(s); strin >> pos;
         string turnRes = check(pos);
         if(turnRes == "win") {
-            cout<<"WIN"<<endl;
+            cout<<"win"<<endl;
         } else if(turnRes == "draw") {
-            cout<<"DRAW"<<endl;
+            cout<<"draw"<<endl;
         } else if(turnRes == "valid") {
-            cout<<"VALID 1"<<endl<<pos<<endl;
-        } else {
-            cout<<"LOSE"<<endl;
-        }
+            cout<<"valid 1"<<endl<<pos<<endl;
+        } else if(turnRes == "lose") {
+            cout<<"lose"<<endl;
+        } 
     }
 }
