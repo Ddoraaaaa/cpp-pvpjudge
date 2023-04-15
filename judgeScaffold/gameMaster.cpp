@@ -133,7 +133,20 @@ public:
     }
 
     bool ensureInput() {
-        
+        pollfd pfd = {fromFile[0], POLLIN, 0};
+        int timeoutMs = timeLeft;
+
+        int ret = poll(&pfd, 1, timeoutMs);
+
+        if (ret == -1) {
+            perror("Poll");
+            return 0;
+        } else if (ret == 0) {
+            cerr << "Timeout" << endl;
+            return 0;
+        } else {
+            return 1;
+        }
     }
 private:
 
@@ -233,25 +246,5 @@ int main() {
     pipe(fd); // test
 
     struct pollfd pfd = {fd[0], POLLIN, 0};
-    int timeout_ms = 1000;
-
-    int ret = poll(&pfd, 1, timeout_ms);
-
-    if (ret == -1) {
-        perror("poll");
-        return 1;
-    } else if (ret == 0) {
-        // timeout expired
-        printf("Timeout\n");
-    } else {
-        // fd ready for reading
-        char buf[1024];
-        ssize_t n = read(fd[0], buf, sizeof(buf));
-        if (n == -1) {
-            perror("read");
-            return 1;
-        } else {
-            printf("Read %ld bytes: %.*s\n", n, (int)n, buf);
-        }
-    }
+    
 }
