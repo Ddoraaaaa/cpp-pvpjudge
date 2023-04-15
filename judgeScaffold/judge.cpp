@@ -49,6 +49,7 @@ string check(int pos) {
 }
 
 signed main() {
+    ofstream fout("log.txt", ofstream::out);
     // time limit for each player is 1000ms
     cout << "time 1000" << endl;
 
@@ -70,13 +71,21 @@ signed main() {
         getline(cin, s); strin.str(s); strin >> pos;
         string turnRes = check(pos);
         if(turnRes == "win") {
-            cout<<"win"<<endl;
+            cout << "win" << endl;
         } else if(turnRes == "draw") {
-            cout<<"draw"<<endl;
+            cout << "draw" << endl;
+        } else if(turnRes == "invalid") {
+            cout << "lose" << endl;
+        } else if(turnRes == "timeout") {
+            cout << "lose" << endl;
         } else if(turnRes == "valid") {
-            cout<<"valid 1"<<endl<<pos<<endl;
-        } else if(turnRes == "lose") {
-            cout<<"lose"<<endl;
+            cout << "valid" << endl;
+            cout << "gamestate 1" << endl;
+            cout << pos << endl;
+            fout << pos << endl;
+            continue;
         } 
+        fout << -1 << endl;
+        break;
     }
 }

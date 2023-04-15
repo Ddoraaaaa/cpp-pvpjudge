@@ -5,25 +5,24 @@
 
 using namespace std;
 
-unordered_map<pair<int, int>, int> board;
-int n, m;
+map<pair<int, int>, int> board;
+int n = 6, m = 7;
 
 void print_board() {
     for (int x = 1; x <= n; ++x) {
         for (int y = 1; y <= m; ++y) {
-            cout << board[{x, y}] << " ";
+            cerr << board[{x, y}] << " ";
         }
-        cout << '\n';
+        cerr << '\n';
     }
 }
 
 pair<int, int> read_move() {
     int x, y;
-    cin >> x;
-    if (x == 0) {
-        return {-1, -1};
-    }
     cin >> y;
+    for(x = 1; ; x++) {
+        if(board[{x, y}] == 0) break;
+    }
     board[{x, y}] = 2;
     return {x, y};
 }
@@ -32,7 +31,7 @@ void make_move(pair<int, int> move) {
     int x, y;
     tie(x, y) = move;
     board[move] = 1;
-    cout << x << " " << y << endl;
+    cout << y << endl;
 }
 
 int get_score(int x, int y) {
@@ -81,7 +80,6 @@ pair<int, int> find_greedy() {
 }
 
 int main() {
-    cin >> n >> m;
     int player_turn;
     cin >> player_turn;
     if (player_turn == 2) {
