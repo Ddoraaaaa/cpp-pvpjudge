@@ -23,7 +23,6 @@ class exFile {
     int toFile[2], fromFile[2];
     int cpuTime, ramMb;
     int timeLeft, lastResume;
-    FILE *toF, *frF;
     bool restricted;
     pid_t childId;
 
@@ -50,7 +49,7 @@ public:
             exit(1);
         } else if (pid == 0) {
             // child process (File)
-            cout<<"okay this is bad1"<<endl;
+            
             // pipe from main
             {
                 // close write end of the pipe
@@ -75,24 +74,17 @@ public:
             execl(("./" + fileName).c_str(), fileName.c_str(), NULL);
 
             // cant execute
-            cerr << "Error: Failed to execute file" << endl;
+            cerr << "Error: Failed to execute file " << fileName << endl;
 
             exit(1);
         } else {
             // parent process (main)
-            cout<<pid<<" opened"<<endl;
-            cout<<"okay this is bad2"<<endl;
+            cerr << pid << " opened"<<endl;
+
             childId = pid;
             // close unneeded pipes:
             close(toFile[0]);
             close(fromFile[1]);
-            
-            // open file streams
-            toF = fdopen(toFile[1], "w");
-            frF = fdopen(fromFile[0], "r");
-            setbuf(frF, NULL); // Disable buffering for frF
-            setbuf(toF, NULL); // Disable buffering for toF
-
         }
     }
 
@@ -105,9 +97,12 @@ public:
     void readLine(string &s) {
         s = "";
         char buf[1024];
-        while(fgets(buf, sizeof(buf), frF) != nullptr) {
-            s += buf;
-        };
+        ssize_t n = read(fromFile[0], buf, sizeof(buf));
+        buf[n] = '\0';
+        s+=buf;
+        // while(fgets(buf, sizeof(buf), frF) != nullptr) {
+        //     s += buf;
+        // };
     }
 
     void readLine(stringstream &strin) {
@@ -164,26 +159,24 @@ private:
     }
 
     void setRestriction(string fileRoot) {
-        // struct rlimit limits;
+        struct rlimit limits;
 
-        // // limit cpu time
-        // limits.rlim_cur = 0.001 * cpuTime;
-        // limits.rlim_max = 0.001 * cpuTime;
-        // setrlimit(RLIMIT_CPU, &limits);
+        // limit cpu time
+        limits.rlim_cur = 0.001 * cpuTime;
+        limits.rlim_max = 0.001 * cpuTime;
+        setrlimit(RLIMIT_CPU, &limits);
 
-        // // limit mem usage
-        // limits.rlim_cur = ramMb * 1024 * 1024;
-        // limits.rlim_max = ramMb * 1024 * 1024;
-        // setrlimit(RLIMIT_AS, &limits);
+        // limit mem usage
+        limits.rlim_cur = ramMb * 1024 * 1024;
+        limits.rlim_max = ramMb * 1024 * 1024;
+        setrlimit(RLIMIT_AS, &limits);
 
-        cout<<"DWHUAIDWADWA"<<endl;
         // sandbox process file access
         chroot(fileRoot.c_str());
-        printf("%s dgwayudigwyudiwagikduywa", fileRoot.c_str());
-        cout<<endl;
         chdir("/");
-        ofstream fout("log1.txt", ofstream::app);
-        fout<<"test player 1321"<<endl;
+
+        ofstream fout("playerlog.txt", ofstream::out);
+        fout<<"player " << fileRoot << "joined on process " << getpid() << endl;
 
         //kill syscalls
         #ifndef __APPLE__
@@ -226,17 +219,14 @@ public:
 
     void prepGame() {
         string type;
+        int _timeLimit;
 
         judge->runFile(jFile);
 
         // get time limit
-        cout<<"reached here? "<<endl;
         judge->readLine(judgein);
-        cout<<"reached here too? "<<endl;
-        int _timeLimit;
-        cout<<judge->ensureInput(20)<<endl;
         judgein >> type; assert(type=="time"); judgein >> _timeLimit;
-        cout<<type<<" "<<_timeLimit<<endl;
+        
         for(int i = 0; i <= 1; i++) {
             players[i]->setResource(3 * _timeLimit, 64, _timeLimit);
         }
@@ -302,7 +292,6 @@ int main() {
     string playersRoot[] = {"./p1root/", "./p2root/"};
     game gameM(playersF, playersRoot, judgeF);
     gameM.prepGame();
-    cout<<"currently here"<<endl;
     gameM.startGame();
     return 0;
     while(true) {
