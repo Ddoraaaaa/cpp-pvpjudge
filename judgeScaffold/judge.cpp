@@ -50,7 +50,6 @@ string check(int pos) {
 
 signed main() {
 
-    cerr << "what the fuck" << endl;
     ofstream fout("log.txt", ofstream::out);
     fout << "test" << endl;
 
@@ -67,7 +66,7 @@ signed main() {
         // get player ID and number of lines
         int lineCnt;
         getline(cin, s); strin.str(s); strin >> curPlayer >> lineCnt;
-
+        cerr << curPlayer << lineCnt << endl;
         int pos;
         if(lineCnt != 1) {
             return 0;

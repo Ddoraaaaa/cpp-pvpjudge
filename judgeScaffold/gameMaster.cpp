@@ -3,11 +3,14 @@
 #include <string>
 #include <cstdio>
 #include <chrono>
+#include <dirent.h>
 #include <unistd.h>
 #include <poll.h>
 #include <sstream>
+#include <sandbox.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 // not available on OS X, because why would it
 #ifndef __APPLE__
 #include <seccomp.h>
@@ -69,9 +72,9 @@ public:
             if(restricted) {
                 setRestriction(fileRoot);
             }
-            
+
             // execute file
-            execl(("./" + fileName).c_str(), fileName.c_str(), NULL);
+            execl(("./" + fileName).c_str(), ("./" + fileName).c_str(), NULL);
             perror("execl");
 
             // cant execute
@@ -153,6 +156,10 @@ public:
         return status;
     }
 
+    void killProcess() {
+        kill(childId, SIGTERM);
+    }
+
 private:
 
     int getTime() {
@@ -160,21 +167,59 @@ private:
     }
 
     void setRestriction(string fileRoot) {
-        // struct rlimit limits;
+        struct rlimit limit;
 
-        // // limit cpu time
-        // limits.rlim_cur = 0.001 * cpuTime;
-        // limits.rlim_max = 0.001 * cpuTime;
-        // setrlimit(RLIMIT_CPU, &limits);
+        // limit cpu time
+        limit.rlim_cur = (cpuTime - 1) / 1000 + 3;
+        limit.rlim_max = (cpuTime - 1) / 1000 + 3;
+        if (setrlimit(RLIMIT_CPU, &limit) < 0) {
+            cerr << "limit cpu time failed for " << getpid() << endl;
+            exit(1);
+        }
 
-        // // limit mem usage
-        // limits.rlim_cur = ramMb * 1024 * 1024;
-        // limits.rlim_max = ramMb * 1024 * 1024;
-        // setrlimit(RLIMIT_AS, &limits);
+        // limit mem usage (this is really getting on my nerves now https://developer.apple.com/forums/thread/702803)
+        #ifndef __APPLE__
+        limit.rlim_cur = 1ll * ramMb * 1024 * 1024;
+        limit.rlim_max = 1ll * ramMb * 1024 * 1024;
+        if (setrlimit(RLIMIT_AS, &limit) < 0) {
+            cerr << "limit ram failed for " << getpid() << endl;
+            exit(1);
+        }
+        #endif
 
         // sandbox process file access
-        chroot(fileRoot.c_str());
+        #ifndef __APPLE__
+        if (system("unshare -m -p --fork --mount-proc chroot p1root ./player1") == -1) {
+            cerr << "i cant even test this" << endl;
+            exit(EXIT_FAILURE);
+        }
         chdir("/");
+        // chroot(fileRoot.c_str());
+        #endif
+
+        #ifdef __APPLE__
+        if (chdir(fileRoot.c_str()) < 0) {
+            cerr << "chdir failed" << endl;
+            exit(1);
+        }
+
+        limit.rlim_cur = 3;
+        limit.rlim_max = 3;
+        if (setrlimit(RLIMIT_NOFILE, &limit) < 0) {
+            cerr << "sandboxing failed for " << getpid() << endl;
+            exit(1);
+        }
+
+        // const char *sandbox_profile = "(version 1)(deny default)(allow file-write* (subpath \".\"))";
+
+        // char *errorbuf;
+        // int result = sandbox_init(sandbox_profile, SANDBOX_NAMED, &errorbuf);
+        // if (result != 0) {
+        //     std::cerr << "sandbox_init failed: " << errorbuf << '\n';
+        //     sandbox_free_error(errorbuf);
+        //     exit(1);
+        // }
+        #endif
 
         ofstream fout("playerlog.txt", ofstream::out);
         fout<<"player " << fileRoot << "joined on process " << getpid() << endl;
@@ -229,7 +274,7 @@ public:
         judgein >> type; assert(type=="time"); judgein >> _timeLimit;
         
         for(int i = 0; i <= 1; i++) {
-            players[i]->setResource(3 * _timeLimit, 64, _timeLimit);
+            players[i]->setResource(10 * _timeLimit, 64, _timeLimit);
         }
 
         curPlayer = 0;
@@ -237,8 +282,9 @@ public:
 
     void startGame() {
         for(int i = 0; i <= 1; i++) {
-            string playerId = {(char)('0' + i)};
+            string playerId = {(char)('1' + i), '\n'};
             players[i]->runFile(pFiles[i], pRoots[i]);
+            cerr<<playerId;
             players[i]->writeLine(playerId);
         }
     }
@@ -257,14 +303,21 @@ public:
         judge->waitFile();
     }
 
+    void killPlayerProcess() {
+        for(int i = 0; i <= 1; i++) {
+            players[i]->killProcess();
+        }
+    }
+
 private:
 
     TurnResult execTurn(exFile *player) {
         string type, line;
         int lineCnt;
+        cerr<<"BUT IT GOT HERE"<<endl;
         judge->readLine(judgein);
         judgein >> type; assert(type == "gamestate"); judgein >> lineCnt;
-
+        cerr<<lineCnt<<" lmao1"<<endl;
         player->resumeTime();
 
         for(int i = 1; i <= lineCnt; i++) {
@@ -272,7 +325,9 @@ private:
             player->writeLine(line);
         }
 
-        player->ensureInput();
+        if(!player->ensureInput()) {
+            return lose;
+        }
         player->readLine(line);
         player->splitTime();
 
@@ -295,7 +350,6 @@ int main() {
     gameM.prepGame();
     gameM.startGame();
     while(true) {
-        cerr<<-1;
         game::TurnResult res = gameM.nextTurn();
         int winner = -1;
         switch(res){
@@ -315,4 +369,5 @@ int main() {
             break;
         }
     }
+    gameM.killPlayerProcess();
 }

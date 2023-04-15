@@ -82,13 +82,11 @@ pair<int, int> find_greedy() {
 }
 
 int main() {
-
-    return 0;
-    ofstream fout("log2.txt", ofstream::app);
-    fout<<"test player 1"<<endl;
-
     int player_turn;
+    cerr << "before reading playerturn"<<endl;
+    // return 0;
     cin >> player_turn;
+    cerr << player_turn << " is player2" << endl;
     if (player_turn == 2) {
         read_move();
     }
