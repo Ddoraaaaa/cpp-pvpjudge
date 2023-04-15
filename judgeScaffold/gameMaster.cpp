@@ -25,6 +25,7 @@ class exFile {
     int timeLeft, lastResume;
     FILE *toF, *frF;
     bool restricted;
+    pid_t childId;
 
 public:
 
@@ -73,13 +74,14 @@ public:
             // execute file
             execl(("./" + fileName).c_str(), fileName.c_str(), NULL);
 
-            // The code below is only executed if execl() fails
-            cerr << "Error: Failed to execute player1" << endl;
+            // cant execute
+            cerr << "Error: Failed to execute file" << endl;
 
             exit(1);
         } else {
             // parent process (main)
 
+            childId = pid;
             // close unneeded pipes:
             close(toFile[0]);
             close(fromFile[1]);
@@ -148,6 +150,13 @@ public:
             return 1;
         }
     }
+
+    int waitFile() {
+        int status;
+        waitpid(childId, &status, 0);
+        return status;
+    }
+
 private:
 
     int getTime() {
@@ -186,22 +195,26 @@ class game {
     string pFiles[2], jFile;
     exFile *players[2], *judge;
     stringstream playerin, judgein;
-    int curPlayer;
+    int curPlayer, curTurn;
 
 public:
 
     enum TurnResult {
-        p1w, p2w, draw, valid
+        win, lose, draw, valid
     };
 
-    game(string _pFiles[], string _jFile) {
+    game(string _pFiles[], string _jFile) : curPlayer(0), curTurn(0) {
         jFile = _jFile;
         judge = new exFile(false);
         for(int i = 0; i <= 1; i++) {
             pFiles[i] = _pFiles[i];
             players[i] = new exFile(true);
-        }
-        
+        }        
+    }
+
+    ~game() {
+        delete judge;
+        delete players[0]; delete players[1];
     }
 
     void prepGame() {
@@ -213,6 +226,7 @@ public:
         judge->readLine(judgein);
         int timeLimit;
         judgein >> type; assert(type=="time"); judgein >> timeLimit;
+
         for(int i = 0; i <= 1; i++) {
             players[i]->setResource(3 * timeLimit, 64, timeLimit);
         }
@@ -224,27 +238,84 @@ public:
         string type;
         int lineCnt;
 
-        judge->readLine(judgein);
-        judgein >> type; assert(type=="gamestate"); judgein >> lineCnt;
-        int turn = 0;
-
         for(int i = 0; i <= 1; i++) {
+            string playerId = "" + ('0' + i);
             players[i]->runFile(pFiles[i], pFiles[i]);
+            players[i]->writeLine(playerId);
         }
-        players[0]->resumeTime();
+        
+        while(true) {
+            TurnResult turnRes = nextTurn();
+        }
 
     }
 
     TurnResult nextTurn() {
-        return draw;
+        TurnResult turnRes = execTurn(players[curPlayer]);
+        curPlayer ^=1;
+        return turnRes;
     }
 
+    int getCurPlayer() {
+        return curPlayer;
+    }
+
+    void waitJudge() {
+        judge->waitFile();
+    }
+
+private:
+
+    TurnResult execTurn(exFile *player) {
+        string type, line;
+        int lineCnt;
+        judge->readLine(judgein);
+        judgein >> type; assert(type == "gamestate"); judgein >> lineCnt;
+
+        player->resumeTime();
+
+        for(int i = 1; i <= lineCnt; i++) {
+            judge->readLine(line);
+            player->writeLine(line);
+        }
+
+        player->ensureInput();
+        player->readLine(line);
+        player->splitTime();
+
+        judge->writeLine(line);
+
+        judge->readLine(judgein);
+        judgein >> type;
+        
+        if(type == "lose") return lose;
+        if(type == "win") return win;
+        if(type == "draw") return draw;
+        if(type == "valid") return valid;
+    }
 };
 
 int main() {
-    int fd[2];
-    pipe(fd); // test
-
-    struct pollfd pfd = {fd[0], POLLIN, 0};
-    
+    string playersF[] = {"player1", "player2"}, judgeF = "judge";
+    game gameM(playersF, judgeF);
+    gameM.prepGame();
+    gameM.startGame();
+    while(true) {
+        game::TurnResult res = gameM.nextTurn();
+        int winner = -1;
+        switch(res){
+            case game::TurnResult::draw:
+                winner = 0; break;
+            case game::TurnResult::win:
+                winner = gameM.getCurPlayer(); break;
+            case game::TurnResult::lose:
+                winner = gameM.getCurPlayer() ^ 1; break;
+        }
+        if(winner != -1) {
+            gameM.waitJudge();
+            ofstream logout("log.txt", ofstream::app);
+            logout<<winner<<endl;
+            break;
+        }
+    }
 }
