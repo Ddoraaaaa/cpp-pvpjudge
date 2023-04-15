@@ -9,6 +9,8 @@
         "set": "cpp",
         "unordered_map": "cpp",
         "unordered_set": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "iostream": "cpp",
+        "tuple": "cpp"
     }
 }
