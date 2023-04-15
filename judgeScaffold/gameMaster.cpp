@@ -72,6 +72,7 @@ public:
             
             // execute file
             execl(("./" + fileName).c_str(), fileName.c_str(), NULL);
+            perror("execl");
 
             // cant execute
             cerr << "Error: Failed to execute file " << fileName << endl;
@@ -82,6 +83,7 @@ public:
             cerr << pid << " opened"<<endl;
 
             childId = pid;
+
             // close unneeded pipes:
             close(toFile[0]);
             close(fromFile[1]);
@@ -100,9 +102,6 @@ public:
         ssize_t n = read(fromFile[0], buf, sizeof(buf));
         buf[n] = '\0';
         s+=buf;
-        // while(fgets(buf, sizeof(buf), frF) != nullptr) {
-        //     s += buf;
-        // };
     }
 
     void readLine(stringstream &strin) {
@@ -112,7 +111,9 @@ public:
     }
 
     void writeLine(string &s) {
-        fprintf(toF, "%s", s.c_str());
+        if(write(toFile[1], s.c_str(), s.size()) == -1) {
+            perror("write");
+        }
     }
 
     void splitTime() {
@@ -159,17 +160,17 @@ private:
     }
 
     void setRestriction(string fileRoot) {
-        struct rlimit limits;
+        // struct rlimit limits;
 
-        // limit cpu time
-        limits.rlim_cur = 0.001 * cpuTime;
-        limits.rlim_max = 0.001 * cpuTime;
-        setrlimit(RLIMIT_CPU, &limits);
+        // // limit cpu time
+        // limits.rlim_cur = 0.001 * cpuTime;
+        // limits.rlim_max = 0.001 * cpuTime;
+        // setrlimit(RLIMIT_CPU, &limits);
 
-        // limit mem usage
-        limits.rlim_cur = ramMb * 1024 * 1024;
-        limits.rlim_max = ramMb * 1024 * 1024;
-        setrlimit(RLIMIT_AS, &limits);
+        // // limit mem usage
+        // limits.rlim_cur = ramMb * 1024 * 1024;
+        // limits.rlim_max = ramMb * 1024 * 1024;
+        // setrlimit(RLIMIT_AS, &limits);
 
         // sandbox process file access
         chroot(fileRoot.c_str());
@@ -293,8 +294,8 @@ int main() {
     game gameM(playersF, playersRoot, judgeF);
     gameM.prepGame();
     gameM.startGame();
-    return 0;
     while(true) {
+        cerr<<-1;
         game::TurnResult res = gameM.nextTurn();
         int winner = -1;
         switch(res){

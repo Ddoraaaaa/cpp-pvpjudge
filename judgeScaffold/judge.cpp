@@ -49,14 +49,14 @@ string check(int pos) {
 }
 
 signed main() {
-    ofstream fout("log.txt", ofstream::out);
 
+    cerr << "what the fuck" << endl;
+    ofstream fout("log.txt", ofstream::out);
     fout << "test" << endl;
 
     // time limit for each player is 1000ms
-    // cout << "time 10000" << endl;
-    printf("time 10000\n");
-    fflush(stdout);
+    cout << "time 1000" << endl;
+    
     // print the original game state
     cout << "gamestate 0" << endl;
 

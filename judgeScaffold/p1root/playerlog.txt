@@ -1,0 +1,1 @@
+player ./p1root/joined on process 29288

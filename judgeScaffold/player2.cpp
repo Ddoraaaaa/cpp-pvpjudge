@@ -83,6 +83,7 @@ pair<int, int> find_greedy() {
 
 int main() {
 
+    return 0;
     ofstream fout("log2.txt", ofstream::app);
     fout<<"test player 1"<<endl;
 
