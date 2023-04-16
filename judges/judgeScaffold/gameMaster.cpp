@@ -154,7 +154,7 @@ public:
         if(lastResume == -1) {
             return;
         }
-        timeLeft -= getTime() - lastResume;
+        timeLeft -= max(0, getTime() - lastResume);
         lastResume = -1;
     }
 
@@ -174,7 +174,7 @@ public:
             perror("Poll");
             return 0;
         } else if (ret == 0) {
-            cerr << "Timeout" << endl;
+            cerr << "timeout" << endl;
             return 0;
         } else {
             return 1;
@@ -189,6 +189,10 @@ public:
 
     void killProcess() {
         kill(childId, SIGTERM);
+    }
+
+    int getTimeLeft() {
+        return timeLeft;
     }
 
 private:
@@ -234,8 +238,8 @@ private:
             exit(1);
         }
 
-        limit.rlim_cur = 3;
-        limit.rlim_max = 3;
+        limit.rlim_cur = 0;
+        limit.rlim_max = 0;
         if (setrlimit(RLIMIT_NOFILE, &limit) < 0) {
             cerr << "sandboxing failed for " << getpid() << endl;
             exit(1);
@@ -276,10 +280,10 @@ class game {
 public:
 
     enum TurnResult {
-        win, lose, draw, valid
+        win, lose, draw, valid, timeout, invalid
     };
 
-    game(string _pFiles[], string _pRoots[], string _jFile) : curPlayer(0), curTurn(0) {
+    game(string _pFiles[], string _pRoots[], string _jFile) : curPlayer(0), curTurn(-1) {
         jFile = _jFile;
         judge = new exFile(false);
         for(int i = 0; i <= 1; i++) {
@@ -327,7 +331,7 @@ public:
     }
 
     int getCurPlayer() {
-        return curPlayer;
+        return curPlayer ^ 1;
     }
 
     void waitJudge() {
@@ -338,6 +342,10 @@ public:
         for(int i = 0; i <= 1; i++) {
             players[i]->killProcess();
         }
+    }
+
+    int playerTime(int playerId) {
+        return players[playerId]->getTimeLeft();
     }
 
 private:
@@ -357,9 +365,12 @@ private:
         }
 
         if(!player->ensureInput()) {
-            return lose;
+            player->splitTime();
+            return timeout;
         }
-        player->readLine(line);
+        if(!player->readLine(line)) {
+            return invalid;
+        }
         player->splitTime();
 
         // string s = ""; s += (char)(curPlayer + '1'); s += " 0\n";
@@ -369,6 +380,7 @@ private:
         judge->readLine(judgein);
         judgein >> type;
         
+        if(type == "invalid") return invalid;
         if(type == "lose") return lose;
         if(type == "win") return win;
         if(type == "draw") return draw;
@@ -385,13 +397,18 @@ int main() {
     while(true) {
         game::TurnResult res = gameM.nextTurn();
         int winner = -1;
+        string reason;
         switch(res){
             case game::TurnResult::draw:
                 winner = 0; break;
             case game::TurnResult::win:
-                winner = gameM.getCurPlayer(); break;
+                winner = gameM.getCurPlayer() + 1; reason = "valid"; break;
             case game::TurnResult::lose:
-                winner = gameM.getCurPlayer() ^ 1; break;
+                winner = gameM.getCurPlayer() ^ 1 + 1; reason = "valid"; break;
+            case game::TurnResult::timeout:
+                winner = gameM.getCurPlayer() ^ 1 + 1; reason = "timeout"; break;
+            case game::TurnResult::invalid:
+                winner = gameM.getCurPlayer() ^ 1 + 1; reason = "invalid"; break;
             default:
                 break;
         }
@@ -399,7 +416,7 @@ int main() {
         if(winner != -1) {
             gameM.waitJudge();
             ofstream logout("log.txt", ofstream::app);
-            logout<<winner<<endl;
+            logout <<"winner " << winner << " " << reason << endl;
             break;
         }
     }

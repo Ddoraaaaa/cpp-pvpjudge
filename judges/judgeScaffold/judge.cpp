@@ -74,11 +74,8 @@ signed main() {
         strin.str(""); // ???
         strin.clear(); // this shouldnt be necessary
         getline(cin, s); strin.str(s);
-        fout<<"s from game is: "<<s<<" "<<strin.str()<<" "<<pos<<endl;
         strin >> pos;
-        fout<<"s from game is: "<<s<<" "<<strin.str()<<" "<<pos<<endl;
         string turnRes = check(pos);
-        fout<<"this move is "<<turnRes<<endl;
         if(turnRes == "win") {
             cout << "win" << endl;
         } else if(turnRes == "draw") {
@@ -95,7 +92,7 @@ signed main() {
             curPlayer = 3 - curPlayer;
             continue;
         } 
-        fout << "player " << curPlayer << ": " <<pos << endl;
+        fout << "player" << curPlayer << ": " <<pos << endl;
         break;
     }
 }
