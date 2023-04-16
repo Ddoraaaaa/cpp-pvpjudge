@@ -83,18 +83,16 @@ pair<int, int> find_greedy() {
 
 int main() {
     int player_turn;
-    cerr << "before reading playerturn"<<endl;
-    // return 0;
+    // cerr << "before reading playerturn"<<endl;
     cin >> player_turn;
     cerr << player_turn << " is player2" << endl;
     if (player_turn == 2) {
         read_move();
     }
-
     while (true) {
         pair<int, int> next_move = find_greedy();
         make_move(next_move);
-        print_board();
+        // print_board();
         pair<int, int> op_move = read_move();
         if (op_move.first == -1) {
             break;

@@ -2,7 +2,7 @@
 #include <sstream>
 using namespace std;
 
-int curPlayer;
+int curPlayer = 1;
 int a[6][8], cntMove=0;
 
 bool checkPos(int x, int y) {
@@ -14,7 +14,7 @@ bool checkPos(int x, int y) {
 
 bool checkRow(int x, int y) {
     bool check0=true, check1=true, check2=true;
-    for(int i=0; i<=4; i++) {
+    for(int i=0; i<4; i++) {
         check0&=checkPos(x, y+i);
         check1&=checkPos(x+i, y);
         check2&=checkPos(x+i, y+i);
@@ -64,15 +64,21 @@ signed main() {
     stringstream strin;
     while(true) {
         // get player ID and number of lines
-        int lineCnt;
-        getline(cin, s); strin.str(s); strin >> curPlayer >> lineCnt;
-        cerr << curPlayer << lineCnt << endl;
+        // int lineCnt;
+        // getline(cin, s); strin.str(s); strin >> curPlayer >> lineCnt;
+        // cerr << curPlayer << "lmao " << lineCnt << endl;
+        // if(lineCnt != 1) {
+        //     return 0;
+        // }
         int pos;
-        if(lineCnt != 1) {
-            return 0;
-        }
-        getline(cin, s); strin.str(s); strin >> pos;
+        strin.str(""); // ???
+        strin.clear(); // this shouldnt be necessary
+        getline(cin, s); strin.str(s);
+        fout<<"s from game is: "<<s<<" "<<strin.str()<<" "<<pos<<endl;
+        strin >> pos;
+        fout<<"s from game is: "<<s<<" "<<strin.str()<<" "<<pos<<endl;
         string turnRes = check(pos);
+        fout<<"this move is "<<turnRes<<endl;
         if(turnRes == "win") {
             cout << "win" << endl;
         } else if(turnRes == "draw") {
@@ -85,10 +91,11 @@ signed main() {
             cout << "valid" << endl;
             cout << "gamestate 1" << endl;
             cout << pos << endl;
-            fout << pos << endl;
+            fout << "player" << curPlayer << ": " <<pos << endl;
+            curPlayer = 3 - curPlayer;
             continue;
         } 
-        fout << -1 << endl;
+        fout << "player " << curPlayer << ": " <<pos << endl;
         break;
     }
 }

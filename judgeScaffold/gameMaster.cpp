@@ -23,6 +23,7 @@ class exFile {
         py, cpp, c, java, go, ruby, js
     };
 
+    char buffer[1024];
     int toFile[2], fromFile[2];
     int cpuTime, ramMb;
     int timeLeft, lastResume;
@@ -31,7 +32,9 @@ class exFile {
 
 public:
 
-    exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : cpuTime(1), ramMb(64), timeLeft(_timeLeft), lastResume(-1),  restricted(_restricted) {}
+    exFile(bool _restricted = true, int _timeLeft = INT32_MAX) : cpuTime(1), ramMb(64), timeLeft(_timeLeft), lastResume(-1),  restricted(_restricted) {
+        buffer[0]='\0';
+    }
 
     void runFile(string fileName, string fileRoot = "") {
         
@@ -83,7 +86,7 @@ public:
             exit(1);
         } else {
             // parent process (main)
-            cerr << pid << " opened"<<endl;
+            // cerr << pid << " opened"<<endl;
 
             childId = pid;
 
@@ -99,21 +102,49 @@ public:
         ramMb = _ramMb;
     }
 
-    void readLine(string &s) {
+    bool readLine(string &s) {
+        static char buffer[1024];
         s = "";
-        char buf[1024];
-        ssize_t n = read(fromFile[0], buf, sizeof(buf));
-        buf[n] = '\0';
-        s+=buf;
+        
+        while (true) {
+            if (strlen(buffer) == 0) {
+                ssize_t n = read(fromFile[0], buffer, sizeof(buffer) - 1);
+                if (n == 0) return false; // EOF reached
+                buffer[n] = '\0';
+            }
+            
+            s += buffer;
+            size_t pos = s.find('\n');
+            
+            if (pos != string::npos) {
+                // store remaining suffix in the buffer
+                strncpy(buffer, &s[pos + 1], s.size() - pos - 1);
+                buffer[s.size() - pos - 1] = '\0';
+                
+                // remove the suffix after the endl from s
+                s.erase(pos + 1);
+                break;
+            } else {
+                buffer[0] = '\0';
+            }
+        }
+        cerr << "line read: '" << s << "'" << endl;
+        return true;
     }
 
-    void readLine(stringstream &strin) {
+    bool readLine(stringstream &strin) {
         string s = "";
-        readLine(s);
-        strin.str(s);
+        strin.str(""); // don't ask me why
+        strin.clear(); // this is needed.
+        if(readLine(s)) {
+            strin.str(s);
+            return true;
+        }
+        return false;
     }
 
     void writeLine(string &s) {
+        cerr << "wrote '" << s << "' to " << childId << endl;
         if(write(toFile[1], s.c_str(), s.size()) == -1) {
             perror("write");
         }
@@ -314,10 +345,10 @@ private:
     TurnResult execTurn(exFile *player) {
         string type, line;
         int lineCnt;
-        cerr<<"BUT IT GOT HERE"<<endl;
+        // cerr<<"BUT IT GOT HERE"<<endl;
         judge->readLine(judgein);
-        judgein >> type; assert(type == "gamestate"); judgein >> lineCnt;
-        cerr<<lineCnt<<" lmao1"<<endl;
+        judgein >> type; cerr << type<<endl; judgein >> lineCnt;
+        // cerr<<lineCnt<<" lmao1"<<endl;
         player->resumeTime();
 
         for(int i = 1; i <= lineCnt; i++) {
@@ -331,6 +362,8 @@ private:
         player->readLine(line);
         player->splitTime();
 
+        // string s = ""; s += (char)(curPlayer + '1'); s += " 0\n";
+        // judge->writeLine(s);
         judge->writeLine(line);
 
         judge->readLine(judgein);
@@ -362,6 +395,7 @@ int main() {
             default:
                 break;
         }
+        cerr << gameM.getCurPlayer() << " this turn is: " << winner << endl;
         if(winner != -1) {
             gameM.waitJudge();
             ofstream logout("log.txt", ofstream::app);
