@@ -2,6 +2,6 @@
 *judge
 *player1
 *player2
-.DS_Store
-.gitignore
-judgeScaffold/.DS_Store
+*.DS_Store
+*scaffold/.DS_Store
+*judges/judge*
