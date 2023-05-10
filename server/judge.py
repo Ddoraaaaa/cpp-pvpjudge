@@ -39,8 +39,8 @@ class Hub:
         self.clearJudges()
 
     def addSubmission(self, player1_file, player2_file, submission_id):
-        player1_file.save(os.path.join(self.player1_dir, f'{submission_id}.{player1_file.filename.split(".")[-1]}'))
-        player2_file.save(os.path.join(self.player2_dir, f'{submission_id}.{player2_file.filename.split(".")[-1]}'))
+        player1_file.save(os.path.join(self.p1Dir, f'{submission_id}.{player1_file.filename.split(".")[-1]}'))
+        player2_file.save(os.path.join(self.p2Dir, f'{submission_id}.{player2_file.filename.split(".")[-1]}'))
         self.submission_queue.append(submission_id)
         self.runNextSubmission()
 
