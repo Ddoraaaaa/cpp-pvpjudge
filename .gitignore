@@ -5,3 +5,4 @@
 *.DS_Store
 *scaffold/.DS_Store
 *judges/judge*
+*.env
