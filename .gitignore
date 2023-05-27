@@ -6,3 +6,7 @@
 *scaffold/.DS_Store
 *judges/judge*
 *.env
+issues.txt
+p1files/*
+p2files/*
+logs/*
