@@ -2,13 +2,14 @@ import os
 import glob
 import shutil
 import subprocess
+from emitjudge import SocketClient
 from werkzeug.utils import secure_filename
 from collections import deque
 from utils import compileFile
 
 class Hub:
 
-    def __init__(self, judge_cnt, judge_dir, p1_dir, p2_dir, log_dir):
+    def __init__(self, judge_cnt, judge_dir, p1_dir, p2_dir, log_dir, socket_url):
         self.judges = []
         self.problems = [] 
         self.judgeCnt = judge_cnt
@@ -17,6 +18,7 @@ class Hub:
         self.p2Dir = p2_dir
         self.logDir = log_dir
         self.submission_queue = deque()
+        self.socket_client = SocketClient(socket_url)
         sDir = os.path.join(judge_dir, 'scaffold')
         for i in range(judge_cnt):
             jDir = os.path.join(judge_dir, f'judge{i}')  
@@ -49,10 +51,12 @@ class Hub:
             if not judge.isOccupied:
                 if self.submission_queue:
                     submission_id = self.submission_queue.popleft()
+                    judge.markAsOccupied()
                     player1_file = glob.glob(os.path.join(self.player1_dir, f'{submission_id}.*'))[0]
                     player2_file = glob.glob(os.path.join(self.player2_dir, f'{submission_id}.*'))[0]
                     judge.saveFiles(player1_file, player2_file)
                     judge.runAndMarkAsUnoccupied()
+                    self.socket_client.finishJudge(self.submission_id)
                     break 
     
 class Judge:

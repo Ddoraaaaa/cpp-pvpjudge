@@ -1,4 +1,4 @@
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import threading
 from judge import Hub
@@ -15,8 +15,9 @@ judge_dir = os.getenv("JUDGE_DIR")
 p1_dir = os.getenv("P1_DIR")
 p2_dir = os.getenv("P2_DIR")
 log_dir = os.getenv("LOG_DIR")
+socket_url = os.getenv("SOCKET_URL")
 
-hub = Hub(judge_cnt, judge_dir, p1_dir, p2_dir, log_dir)
+hub = Hub(judge_cnt, judge_dir, p1_dir, p2_dir, log_dir, socket_url)
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -33,13 +34,14 @@ def submit():
     hub.addSubmission(p1File, p2File, submission_id)
     return {'message': 'Submission received.', 'submission_id': submission_id}, 200
 
-@app.route('/result/<submissionId>')
+@app.route('/result/<submissionId>', methods=['POST'])
 def result(submissionId):
     log_file_path = os.path.join(hub.logDir, f'{submissionId}.txt')
+    
     if os.path.exists(log_file_path):
-        return send_from_directory(hub.logDir, f'{submissionId}.txt')
+        return jsonify({'message': True}), send_from_directory(hub.logDir, f'{submissionId}.txt')
     else:
-        return {'message': 'Invalid ID or still judging'}, 400
+        return jsonify({'message': False, 'file': ''}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
