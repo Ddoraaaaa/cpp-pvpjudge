@@ -22,7 +22,7 @@ class Hub:
         sDir = os.path.join(judge_dir, 'scaffold')
         for i in range(judge_cnt):
             jDir = os.path.join(judge_dir, f'judge{i}')  
-            shutil.copy(sDir, jDir)
+            shutil.copytree(sDir, jDir, dirs_exist_ok=True)
             self.judges.append(Judge(jDir, self.logDir, self))
 
     def judgeComplete(self, judge):
@@ -52,9 +52,9 @@ class Hub:
                 if self.submission_queue:
                     submission_id = self.submission_queue.popleft()
                     judge.markAsOccupied()
-                    player1_file = glob.glob(os.path.join(self.player1_dir, f'{submission_id}.*'))[0]
-                    player2_file = glob.glob(os.path.join(self.player2_dir, f'{submission_id}.*'))[0]
-                    judge.saveFiles(player1_file, player2_file)
+                    player1_file = glob.glob(os.path.join(self.p1Dir, f'{submission_id}.*'))[0]
+                    player2_file = glob.glob(os.path.join(self.p2Dir, f'{submission_id}.*'))[0]
+                    judge.saveFiles(player1_file, player2_file, submission_id)
                     judge.runAndMarkAsUnoccupied()
                     self.socket_client.finishJudge(self.submission_id)
                     break 
@@ -82,6 +82,6 @@ class Judge:
         compileFile(f'{self.folderPath}/gameMaster.cpp', f'{self.folderPath}/gameMaster')
         compileFile(f'{self.folderPath}/judge.cpp', f'{self.folderPath}/judge')
 
-        subprocess.run([f'{self.folderPath}/gameMaster'], cwd=self.folderPath)
+        subprocess.run(['./gameMaster'], cwd=self.folderPath)
         shutil.copy(f'{self.folderPath}/log.txt', f'{self.logDir}/{self.subId}.txt')
         self.markAsUnoccupied()
